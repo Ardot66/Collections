@@ -1,0 +1,22 @@
+TEMP = Temp
+BIN = Bin
+SOURCE = Source
+TESTS = Tests
+
+NAME = Collections
+LIST_NAME = List
+TESTS_NAME = Tests
+
+All: ClearBin Collections Test
+
+ClearBin:
+	(cd $(BIN) && del /q lib$(NAME).dll)
+
+Collections:
+	gcc -fPIC -c $(SOURCE)/$(LIST_NAME).c -o $(TEMP)/$(LIST_NAME).o
+	gcc -s -shared $(TEMP)/$(LIST_NAME).o -o $(BIN)/lib$(NAME).dll
+
+Test:
+	gcc -c $(TESTS)/$(TESTS_NAME).c -o $(TEMP)/$(TESTS_NAME).o
+	gcc -s -L$(BIN) -l$(NAME) $(TEMP)/$(TESTS_NAME).o -o $(BIN)/$(TESTS_NAME).exe
+	$(BIN)/$(TESTS_NAME).exe
