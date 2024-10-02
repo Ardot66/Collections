@@ -1,6 +1,8 @@
 #ifndef __COLLECTIONS__
 #define __COLLECTIONS__
 
+#include "stdlib.h"
+
 typedef size_t ValidityListNumber;
 
 typedef struct List List;
@@ -46,6 +48,6 @@ int ListAdd(List *list, const void *element);
 void ListRemove(List *list, const size_t index);
 void ListPopEnd(List *list, void *elementDest);
 void ListPopFront(List *list, void *elementDest);
-void FreeList(const List *list);
+void ListFree(List *list);
 
 #endif

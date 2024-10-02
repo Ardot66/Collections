@@ -90,7 +90,7 @@ void ListPopFront(List *list, void *elementDest)
     list->Offset++;
 }
 
-void FreeList(const List *list)
+void ListFree(List *list)
 {
     free(list->Body);
 }
