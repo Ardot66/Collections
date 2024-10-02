@@ -16,11 +16,6 @@ int main (int argCount, char **argValues)
     else
         PASS("Successfully created list")
 
-    if(!ListResize(&list, 100) || list.Length != 100)
-        FAIL("Failed to resize list")
-    else
-        PASS("Successfully resized list")
-
     size_t testDataCount = 10;
     size_t testData[testDataCount];
 
@@ -28,22 +23,52 @@ int main (int argCount, char **argValues)
 
     for(size_t x = 0; x < testDataCount; x++)
     {
-        testData[x] = (x * 129 / 3) % 7;
-        ListAdd(&list, testData + x);
-    }
-
-    for(size_t x = 0; x < testDataCount; x++)
-    {
-        size_t value;
-
-        ListGet(&list, x, &value);
-        addSuccessful &= value == testData[x];
+        testData[x] = (x * 129 / 3) % 61;
+        addSuccessful &= ListAdd(&list, testData + x);
     }
 
     if(addSuccessful)
-        PASS("Successfully added and read data from list\n")
+        PASS("Successfully added elements to list")
     else
-        FAIL("Failed to add and read data from list\n")
+        FAIL("Failed to add elements to list")
+
+    size_t endValue;
+    ListPopEnd(&list, &endValue);
+
+    size_t frontValue;
+    ListPopFront(&list, &frontValue);
+    ListRemove(&list, 1);
+
+    if(list.Count == testDataCount - 3 && list.Offset == 1 && frontValue == testData[0] && endValue == (size_t)(testData[testDataCount - 1]))
+        PASS("Successfully removed items from list")
+    else
+        FAIL("Failed to remove items from list")
+
+    if(!ListResize(&list, testDataCount - 3) || list.Length != testDataCount - 3)
+        FAIL("Failed to resize list")
+    else
+        PASS("Successfully resized list")
+
+    int getSuccessful = 1;
+
+    for(size_t x = 0, index = 0; x < testDataCount; x++, index++)
+    {
+        size_t value;
+
+        if(x == 0 || x == 2 || x == testDataCount - 1)
+        {
+            index --;
+            continue;
+        }
+
+        ListGet(&list, index, &value);
+        getSuccessful &= value == testData[x];
+    }
+
+    if(getSuccessful)
+        PASS("Successfully read data from list\n")
+    else
+        FAIL("Failed to read data from list\n")
 
     printf("%llu out of %llu tests passed\n", testsPassed, testCount);
 }
