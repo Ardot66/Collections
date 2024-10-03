@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include "../Source/Collections.h"
 
-#define PASS(message) {printf("Test Passed: %s\n", message); testCount ++; testsPassed ++;}
-#define FAIL(message) {printf("Test Failed: %s\n", message); testCount ++;}
+#define PASS(message) {printf("Test Passed: %s\n", message); TestCount ++; TestsPassed ++;}
+#define FAIL(message) {printf("Test Failed: %s\n", message); TestCount ++;}
 
-int main (int argCount, char **argValues)
+size_t TestCount = 0;
+size_t TestsPassed = 0;
+
+void TestList()
 {
-    size_t testCount = 0;
-    size_t testsPassed = 0;    
-
     List list;
     
     if(!ListCreate(sizeof(size_t), 10, &list))
@@ -69,6 +69,11 @@ int main (int argCount, char **argValues)
         PASS("Successfully read data from list\n")
     else
         FAIL("Failed to read data from list\n")
+}
 
-    printf("%llu out of %llu tests passed\n", testsPassed, testCount);
+int main (int argCount, char **argValues)
+{
+    TestList();
+
+    printf("%llu out of %llu tests passed\n", TestsPassed, TestCount);
 }
