@@ -64,9 +64,53 @@ void TestCArray()
         FAIL("Failed to read data from CArray\n")
 }
 
+void TestArray()
+{
+    const size_t arrayInitialLength = 10;
+    size_t arrayLength = arrayInitialLength;
+    size_t testData[arrayLength];
+
+    size_t arrayOffset = 0;
+    size_t arrayCount = 0;
+    size_t *array = malloc(sizeof(size_t) * arrayLength);
+
+    for(ssize_t x = arrayInitialLength - 1; x >= 0; x--)
+    {
+        testData[x] = (x * 129 / 3) % 61;
+        ArrayInsert(array, &arrayCount, sizeof(size_t), 0, testData + x);
+    }
+
+    ArrayRemove(array, &arrayCount, sizeof(size_t), 0);
+    ArrayRemove(array, &arrayCount, sizeof(size_t), arrayCount - 1);
+
+    if(!ArrayResize((void**)&array, &arrayLength, sizeof(size_t), arrayLength - 2) || arrayLength != arrayInitialLength - 2 || !ArrayResize((void**)&array, &arrayLength, sizeof(size_t), arrayInitialLength + 20) || arrayLength != arrayInitialLength + 20)
+        FAIL("Failed to resize Array")
+    else
+        PASS("Successfully resized Array")
+
+    int getSuccessful = 1;
+
+    for(size_t x = 0, index = 0; x < arrayInitialLength; x++)
+    {
+        if(x == 0)
+            continue;
+        
+        size_t value = array[index];
+        getSuccessful &= value == testData[x];
+
+        index++;
+    }
+
+    if(getSuccessful)
+        PASS("Successfully retrieved values from Array")
+    else
+        FAIL("Failed to retrieve values from Array")
+}
+
 int main (int argCount, char **argValues)
 {
     TestCArray();
+    TestArray();
 
     printf("%llu out of %llu tests passed\n", TestsPassed, TestCount);
 }
