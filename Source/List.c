@@ -1,5 +1,6 @@
 #include "Collections.h"
 #include <stdlib.h>
+#include <string.h>
 
 char *ListGetElement(const List *list, const size_t index)
 {
@@ -25,25 +26,16 @@ int ListCreate(const size_t elementSize, const size_t startingLength, List *list
 
 void ListSet(List *list, const size_t index, const void *element)
 {
-    char *listElement = ListGetElement(list, index);
-
-    for(size_t x = 0; x < list->ElementSize; x++)
-        listElement[x] = ((char *)element)[x];
+    memcpy(ListGetElement(list, index), element, list->ElementSize);
 }
 
 void ListGet(const List *list, const size_t index, void *elementDest)
 {
-    const char *listElement = ListGetElement(list, index);
-
-    for(size_t x = 0; x < list->ElementSize; x++)
-        ((char *)elementDest)[x] = listElement[x];
+    memcpy(elementDest, ListGetElement(list, index), list->ElementSize);
 }
 
-int ListResize(List *list, const size_t length)
+void ListResizeElements(List *list, const size_t length)
 {
-    if(list->Count > length)
-        return 0;
-
     size_t newOffset = (((list->Offset + list->Count) % list->Length) % length);
     char *listBody = ((char *)list->Body);
 
@@ -51,7 +43,15 @@ int ListResize(List *list, const size_t length)
         listBody[(x + newOffset * list->ElementSize) % (length * list->ElementSize)] = listBody[(x + list->Offset * list->ElementSize) % (list->Length * list->ElementSize)];
 
     list->Offset = newOffset;
-    list->Length = length;
+}
+
+int ListResize(List *list, const size_t length)
+{
+    if(list->Count > length)
+        return 0;
+
+    if(list->Length >= length)
+        ListResizeElements(list, length);
 
     void *tempBody = realloc(list->Body, length * list->ElementSize);
 
@@ -59,6 +59,12 @@ int ListResize(List *list, const size_t length)
         return 0;
     
     list->Body = tempBody;
+
+    if(list->Length < length)
+        ListResizeElements(list, length);
+
+    list->Length = length;
+        
     return 1;
 }
 
