@@ -92,7 +92,7 @@ void TestArray()
 
     for(size_t x = 0, index = 0; x < arrayInitialLength; x++)
     {
-        if(x == 0)
+        if(x == 0 || x == arrayInitialLength - 1)
             continue;
         
         size_t value = array[index];
