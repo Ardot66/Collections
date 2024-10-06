@@ -25,6 +25,7 @@ void TestList()
     {
         testData[x] = (x * 129 / 3) % 61;
         addSuccessful &= ListAdd(&list, testData + x);
+        printf("Added: %llu\n", testData[x]);
     }
 
     if(addSuccessful)
@@ -44,7 +45,7 @@ void TestList()
     else
         FAIL("Failed to remove items from list")
 
-    if(!ListResize(&list, testDataCount - 3) || list.Length != testDataCount - 3)
+    if(!ListResize(&list, testDataCount - 3) || list.Length != testDataCount - 3 || !ListResize(&list, testDataCount + 50) || list.Length != testDataCount + 50)
         FAIL("Failed to resize list")
     else
         PASS("Successfully resized list")
@@ -63,6 +64,8 @@ void TestList()
 
         ListGet(&list, index, &value);
         getSuccessful &= value == testData[x];
+
+        printf("Value: %llu\n", value);
     }
 
     if(getSuccessful)
