@@ -1,0 +1,79 @@
+#include "Collections.h"
+#include <stdlib.h>
+#include <string.h>
+
+void *CArrayGetElement(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index)
+{
+    return ((char *)array) + ((index + offset) % length) * elementSize;
+}
+
+void CArraySet(void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, const void *element)
+{
+    memcpy(CArrayGetElement(array, length, offset, elementSize, index), element, elementSize);
+}
+
+void CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, void *elementDest)
+{
+    memcpy(elementDest, CArrayGetElement(array, length, offset, elementSize, index), elementSize);
+}
+
+void CArrayResizeElements(void *array, const size_t count, const size_t length, size_t *arrayOffset, const size_t elementSize, const size_t newLength)
+{
+    size_t newOffset = (((*arrayOffset + count) % length) % newLength);
+    char *arrayBody = ((char *)array);
+
+    for(size_t x = 0; x < count * elementSize; x++)
+        arrayBody[(x + newOffset * elementSize) % (newLength * elementSize)] = arrayBody[(x + *arrayOffset * elementSize) % (length * elementSize)];
+
+    *arrayOffset = newOffset;
+}
+
+int CArrayResize(void **array, const size_t count, const size_t length, size_t *arrayOffset, const size_t elementSize, const size_t newLength)
+{
+    if(count > newLength)
+        return 0;
+
+    if(length >= newLength)
+        CArrayResizeElements(*array, count, length, *arrayOffset, elementSize, newLength);
+
+    void *tempBody = realloc(*array, newLength * elementSize);
+
+    if(tempBody == NULL)
+        return 0;
+    
+    *array = tempBody;
+
+    if(length < newLength)
+        CArrayResizeElements(*array, count, length, *arrayOffset, elementSize, newLength);
+
+    return 1;
+}
+
+void CArrayInsert(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index, const void *element)
+{
+    *count += 1;
+
+    if(index == 0)
+    {
+        *offset = (*offset - 1) % length;
+        *offset += (*offset < 0) * length;
+        return;
+    }
+
+    for(size_t x = (*count - 1) * elementSize; x >= index * elementSize; x--)
+        CArraySet(array, length, *offset, elementSize, x, CArrayGetElement(array, length, *offset, elementSize, x - 1));
+}
+
+void CArrayRemove(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index)
+{
+    *count -= 1;
+
+    if(index == 0)
+    {
+        offset = (*offset + 1) % length;
+        return;
+    }
+
+    for(size_t x = index; x < elementSize * *count; x++)
+       CArraySet(array, length, *offset, elementSize, x, CArrayGetElement(array, length, *offset, elementSize, x + 1));
+}
