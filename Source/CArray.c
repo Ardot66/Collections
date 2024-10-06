@@ -55,7 +55,7 @@ void CArrayInsert(void *array, size_t *count, const size_t length, size_t *offse
     if(index == 0)
         *offset = (*offset <= 0) * (length - 1) + (*offset > 0) * ((*offset - 1) % length);
     else
-        for(size_t x = *count - 1; x > index; x--)
+        for(size_t x = *count; x > index; x--)
             CArraySet(array, length, *offset, elementSize, x, CArrayGetElement(array, length, *offset, elementSize, x - 1));
 
     *count += 1;
