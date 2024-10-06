@@ -27,7 +27,8 @@ struct Dictionary
     size_t Length;
     size_t Count;
     
-    size_t (*HashFunction)(void *key);
+    size_t (*HashFunction)(const void *key);
+    int (*EqualityFunction)(const void *a, const void *b);
 };
 
 struct DStack
@@ -39,6 +40,15 @@ struct DStack
     size_t Count;
     size_t RemovedCount;
 };
+
+
+void *CArrayGetElement(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index);
+void CArraySet(void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, const void *element);
+void CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, void *elementDest);
+void CArrayResizeElements(void *array, const size_t count, const size_t length, size_t *arrayOffset, const size_t elementSize, const size_t newLength);
+int CArrayResize(void **array, const size_t count, size_t *length, size_t *arrayOffset, const size_t elementSize, const size_t newLength);
+void CArrayInsert(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index, const void *element);
+void CArrayRemove(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index);
 
 int ListCreate(const size_t elementSize, const size_t startingLength, List *listDest);
 int ListResize(List *list, const size_t length);
