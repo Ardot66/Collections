@@ -15,8 +15,7 @@ ClearBin:
 
 Collections:
 	gcc -fPIC -c $(SOURCE)/$(CARRAY_NAME).c -o $(TEMP)/$(CARRAY_NAME).o
-	gcc -fPIC -c $(SOURCE)/$(LIST_NAME).c -o $(TEMP)/$(LIST_NAME).o
-	gcc -s -shared $(TEMP)/$(CARRAY_NAME).o $(TEMP)/$(LIST_NAME).o -o $(BIN)/lib$(NAME).dll
+	gcc -s -shared $(TEMP)/$(CARRAY_NAME).o -o $(BIN)/lib$(NAME).dll
 
 Test:
 	gcc -c $(TESTS)/$(TESTS_NAME).c -o $(TEMP)/$(TESTS_NAME).o
