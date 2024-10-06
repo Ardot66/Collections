@@ -10,7 +10,7 @@ TESTS_NAME = Tests
 All: ClearBin Collections Test
 
 ClearBin:
-	(cd $(BIN) && del /q lib$(NAME).dll)
+	(cd $(BIN) && rm -f lib$(NAME).dll $(TESTS_NAME).exe)
 
 Collections:
 	gcc -fPIC -c $(SOURCE)/$(LIST_NAME).c -o $(TEMP)/$(LIST_NAME).o
