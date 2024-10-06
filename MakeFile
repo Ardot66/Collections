@@ -4,8 +4,8 @@ SOURCE = Source
 TESTS = Tests
 
 NAME = Collections
-LIST_NAME = List
 CARRAY_NAME = CArray
+ARRAY_NAME = Array
 TESTS_NAME = Tests
 
 All: ClearBin Collections Test
@@ -14,8 +14,9 @@ ClearBin:
 	(cd $(BIN) && rm -f lib$(NAME).dll $(TESTS_NAME).exe)
 
 Collections:
+	gcc -fPIC -c $(SOURCE)/$(ARRAY_NAME).c -o $(TEMP)/$(ARRAY_NAME).o
 	gcc -fPIC -c $(SOURCE)/$(CARRAY_NAME).c -o $(TEMP)/$(CARRAY_NAME).o
-	gcc -s -shared $(TEMP)/$(CARRAY_NAME).o -o $(BIN)/lib$(NAME).dll
+	gcc -s -shared $(TEMP)/$(ARRAY_NAME).o $(TEMP)/$(CARRAY_NAME).o -o $(BIN)/lib$(NAME).dll
 
 Test:
 	gcc -c $(TESTS)/$(TESTS_NAME).c -o $(TEMP)/$(TESTS_NAME).o
