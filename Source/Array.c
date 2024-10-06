@@ -3,7 +3,7 @@
 
 int ArrayResize(void **array, size_t *length, const size_t elementSize, const size_t newLength)
 {
-    void *temp = realloc(array, elementSize * newLength);
+    void *temp = realloc(*array, elementSize * newLength);
     
     if(temp == NULL)
         return 0;
