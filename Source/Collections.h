@@ -21,6 +21,7 @@ void CArrayRemove(void *array, size_t *count, const size_t length, size_t *offse
 
 size_t DictGetBodySize(const size_t length, const size_t keySize, const size_t valueSize);
 size_t DictGetExistsListSize(const size_t length);
+void DictSetup(ExistsListNum *existsList, const size_t length);
 int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t length, const size_t keySize, const size_t valueSize);
 void *DictGetKey(void *body, const size_t keySize, const size_t valueSize, const size_t index);
 void *DictGetValue(void *body, const size_t keySize, const size_t valueSize, const size_t index);

@@ -14,6 +14,14 @@ size_t DictGetExistsListSize(const size_t length)
     return (length / BITS(ExistsListNum) + (length % BITS(ExistsListNum) != 0)) * sizeof(ExistsListNum);
 }
 
+void DictSetup(ExistsListNum *existsList, const size_t length)
+{
+    size_t existsListCount = DictGetExistsListSize(length) / sizeof(ExistsListNum);
+
+    for(size_t x = 0; x < existsListCount; x++)
+        existsList[x] = 0;
+}
+
 int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t length, const size_t keySize, const size_t valueSize)
 {
     size_t bodySize = DictGetBodySize(length, keySize, valueSize);
@@ -24,9 +32,7 @@ int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t l
         return 0;
 
     ExistsListNum *existsList = (ExistsListNum *)(((char *)body) + bodySize); 
-
-    for(size_t x = 0; x < existsListSize / sizeof(ExistsListNum); x++)
-        existsList[x] = 0;
+    DictSetup(existsList, length);
 
     *bodyDest = body;
     *existsListDest = existsList;
@@ -153,10 +159,12 @@ int DictResize(ExistsListNum **existsList, void **body, size_t *length, const si
     size_t newBodySize = DictGetBodySize(newLength, keySize, valueSize);
     size_t newExistsListSize = DictGetExistsListSize(newLength);
     void *newBody = malloc(newBodySize + newExistsListSize);
-    ExistsListNum *newExistsList = (ExistsListNum *)(((char *)newBody) + newBodySize);
 
     if(newBody == NULL)
         return 0;
+
+    ExistsListNum *newExistsList = (ExistsListNum *)(((char *)newBody) + newBodySize);
+    DictSetup(newExistsList, *length);
 
     for(size_t index = 0; DictIterate(*existsList, *length, index, &index); index++)
     {
