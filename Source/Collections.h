@@ -11,9 +11,7 @@ int ArrayResize(void **array, size_t *length, const size_t elementSize, const si
 void ArrayInsert(void *array, size_t *count, const size_t elementSize, const size_t index, const void *element);
 void ArrayRemove(void *array, size_t *count, const size_t elementSize, const size_t index);
 
-void *CArrayGetElement(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index);
-void CArraySet(void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, const void *element);
-void CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, void *elementDest);
+void *CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index);
 void CArrayResizeElements(void *array, const size_t count, const size_t length, size_t *arrayOffset, const size_t elementSize, const size_t newLength);
 int CArrayResize(void **array, const size_t count, size_t *length, size_t *arrayOffset, const size_t elementSize, const size_t newLength);
 void CArrayInsert(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index, const void *element);

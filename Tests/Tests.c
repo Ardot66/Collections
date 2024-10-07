@@ -22,14 +22,14 @@ void TestCArray()
     for(size_t x = 0; x < cArrayLength; x++)
     {
         testData[x] = (x * 129 / 3) % 61;
-        CArraySet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), cArrayCount, testData + x);
+        *(size_t *)CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), cArrayCount) = testData[x];
         cArrayCount++;
     }
 
     CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 0);
     CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 0);
     size_t value = 0;
-    CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), 1, &value);
+    value = *(size_t *)CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), 1);
     CArrayInsert(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 1, &value);
     CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 2);
     CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), cArrayCount);
@@ -56,7 +56,7 @@ void TestCArray()
             continue;
         }
 
-        CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), index, &value);
+        value = *(size_t*)CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), index);
         getSuccessful &= value == testData[x];
     }
 

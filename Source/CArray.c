@@ -2,19 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *CArrayGetElement(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index)
+void *CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index)
 {
     return ((char *)array) + ((index + offset) % length) * elementSize;
-}
-
-void CArraySet(void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, const void *element)
-{
-    memcpy(CArrayGetElement(array, length, offset, elementSize, index), element, elementSize);
-}
-
-void CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index, void *elementDest)
-{
-    memcpy(elementDest, CArrayGetElement(array, length, offset, elementSize, index), elementSize);
 }
 
 void CArrayResizeElements(void *array, const size_t count, const size_t length, size_t *arrayOffset, const size_t elementSize, const size_t newLength)
@@ -56,10 +46,10 @@ void CArrayInsert(void *array, size_t *count, const size_t length, size_t *offse
         *offset = (*offset <= 0) * (length - 1) + (*offset > 0) * ((*offset - 1) % length);
     else
         for(size_t x = *count; x > index; x--)
-            CArraySet(array, length, *offset, elementSize, x, CArrayGetElement(array, length, *offset, elementSize, x - 1));
+            memcpy(CArrayGet(array, length, *offset, elementSize, x), CArrayGet(array, length, *offset, elementSize, x - 1), elementSize);
 
     *count += 1;
-    memcpy(CArrayGetElement(array, length, *offset, elementSize, index), element, elementSize);
+    memcpy(CArrayGet(array, length, *offset, elementSize, index), element, elementSize);
 }
 
 void CArrayRemove(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index)
@@ -73,5 +63,5 @@ void CArrayRemove(void *array, size_t *count, const size_t length, size_t *offse
     }
 
     for(size_t x = index; x < *count; x++)
-        CArraySet(array, length, *offset, elementSize, x, CArrayGetElement(array, length, *offset, elementSize, x + 1));
+        memcpy(CArrayGet(array, length, *offset, elementSize, x), CArrayGet(array, length, *offset, elementSize, x + 1), elementSize);
 }
