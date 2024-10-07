@@ -152,27 +152,10 @@ void TestDictionary()
 
     size_t index = 0;
 
-    for(size_t x = 0; x < dictInitialLength; x++)
-    {
-        printf("%llu, Key: %llu Value: %llu Exists: %d Hash: %llu \n", x, *(size_t *)DictGetKey(body, sizeof(size_t), sizeof(size_t), x), *(size_t *)DictGetValue(body, sizeof(size_t), sizeof(size_t), x), DictGetElementExists(existsList, x), DictDefaultHash(sizeof(size_t), DictGetKey(body, sizeof(size_t), sizeof(size_t), x)) % dictLength);
-    }
-
     DictIndexOf(existsList, body, dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, &(dictValues[3].Key), DictDefaultEquate, &index);
     DictRemove(existsList, body, dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, index);
 
-    for(size_t x = 0; x < dictInitialLength; x++)
-    {
-        printf("%llu, Key: %llu Value: %llu Exists: %d Hash: %llu \n", x, *(size_t *)DictGetKey(body, sizeof(size_t), sizeof(size_t), x), *(size_t *)DictGetValue(body, sizeof(size_t), sizeof(size_t), x), DictGetElementExists(existsList, x), DictDefaultHash(sizeof(size_t), DictGetKey(body, sizeof(size_t), sizeof(size_t), x)) % dictLength);
-    }
-
     int resizeSuccessful = DictResize(&existsList, &body, &dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, dictLength - 1);
-
-    for(size_t x = 0; x < dictInitialLength; x++)
-    {
-        printf("%llu, Key: %llu Value: %llu Exists: %d Hash: %llu \n", x, *(size_t *)DictGetKey(body, sizeof(size_t), sizeof(size_t), x), *(size_t *)DictGetValue(body, sizeof(size_t), sizeof(size_t), x), DictGetElementExists(existsList, x), DictDefaultHash(sizeof(size_t), DictGetKey(body, sizeof(size_t), sizeof(size_t), x)) % dictLength);
-    }
-
-    //printf
 
     int getSuccessful = 1;
 
@@ -200,7 +183,7 @@ void TestDictionary()
     else
         FAIL("Failed to retrieve items from dictionary")
 
-    free(body);
+    DictFree(body);
 }
 
 int main (int argCount, char **argValues)
