@@ -122,14 +122,14 @@ void TestDictionary()
         size_t Value;
     };
 
-    const size_t dictInitialLength = 10;
+    const size_t dictInitialLength = 1000;
     size_t dictLength = dictInitialLength;
     void *body;
     ExistsListNum *existsList;
 
     int allocationSuccess = DictAllocate(&existsList, &body, dictLength, sizeof(size_t), sizeof(size_t));
 
-    size_t dictValuesLength = dictInitialLength;
+    size_t dictValuesLength = dictInitialLength / 2;
     struct KeyValuePair dictValues[dictValuesLength];
 
     int addSuccessful = 1;
