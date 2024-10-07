@@ -1,7 +1,7 @@
 #ifndef __COLLECTIONS__
 #define __COLLECTIONS__
 
-#include "stdlib.h"
+#include <stddef.h>
 
 typedef unsigned int ExistsListNum;
 typedef size_t (*HashFunction)(const size_t keySize, const void *key);

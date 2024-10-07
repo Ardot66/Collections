@@ -1,4 +1,5 @@
 #include "Collections.h"
+#include <stdlib.h>
 #include <string.h>
 
 int ArrayResize(void **array, size_t *length, const size_t elementSize, const size_t newLength)
