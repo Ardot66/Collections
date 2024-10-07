@@ -11,7 +11,7 @@ size_t DictGetBodySize(const size_t length, const size_t keySize, const size_t v
 
 size_t DictGetExistsListSize(const size_t length)
 {
-    (length / BITS(ExistsListNum) + (length % BITS(ExistsListNum) != 0)) * sizeof(ExistsListNum);
+    return (length / BITS(ExistsListNum) + (length % BITS(ExistsListNum) != 0)) * sizeof(ExistsListNum);
 }
 
 int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t length, const size_t keySize, const size_t valueSize)
@@ -23,8 +23,13 @@ int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t l
     if(body == NULL)
         return 0;
 
+    ExistsListNum *existsList = (ExistsListNum *)(((char *)body) + bodySize); 
+
+    for(size_t x = 0; x < existsListSize / sizeof(ExistsListNum); x++)
+        existsList[x] = 0;
+
     *bodyDest = body;
-    *existsListDest = (ExistsListNum *)(((char *)body) + bodySize);
+    *existsListDest = existsList;
 
     return 1;
 }
@@ -37,8 +42,9 @@ int DictGetElementExists(ExistsListNum *existsList, const size_t index)
 void DictSetElementExists(ExistsListNum *existsList, const size_t index, const int exists)
 {
     size_t numIndex = index / BITS(ExistsListNum);
-    size_t flipBit = (0x1 << BITS(ExistsListNum) - 1 - (index % BITS(ExistsListNum)));
-    existsList[numIndex] = exists * (existsList[numIndex] | flipBit) + !exists * (existsList[numIndex] & !flipBit);
+    size_t flipBit = 0x1 << (BITS(ExistsListNum) - 1 - (index % BITS(ExistsListNum)));
+
+    existsList[numIndex] = exists * (existsList[numIndex] | flipBit) + !exists * (existsList[numIndex] & ~flipBit);
 }
 
 void *DictGetKey(void *body, const size_t keySize, const size_t valueSize, const size_t index)
@@ -64,7 +70,7 @@ int DictIndexOf(ExistsListNum *existsList, void *body, const size_t length, cons
 
         if(keyEqualityFunction(keySize, key, curKey))
         {
-            *indexDest == checkIndex;
+            *indexDest = checkIndex;
             return 1;
         }
     }
@@ -87,6 +93,8 @@ int DictAdd(ExistsListNum *existsList, void *body, const size_t length, const si
         memcpy(keyDest, key, keySize);
         memcpy(valueDest, value, valueSize);
 
+        DictSetElementExists(existsList, checkIndex, 1);
+        
         return 1;
     }
 
@@ -96,36 +104,34 @@ int DictAdd(ExistsListNum *existsList, void *body, const size_t length, const si
 int DictRemove(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t index)
 {
     size_t curIndex = index;
-    size_t nextIndex = (index + 1) % length;
+    size_t nextIndex = index + 1;
     void *curKey = DictGetKey(body, keySize, valueSize, curIndex);
-    void *nextKey = DictGetKey(body, keySize, valueSize, nextIndex);
+    void *nextKey = DictGetKey(body, keySize, valueSize, nextIndex % length);
     size_t nextHash = hashFunction(keySize, nextKey) % length;
+
+    if(!DictGetElementExists(existsList, index))
+        return 0;
 
     for(size_t x = 0; x < length; x++)
     {
-        if(!DictGetElementExists(existsList, nextIndex) | (x == length - 1))
+        if(!DictGetElementExists(existsList, nextIndex % length))
+            break;
+
+        if(nextHash <= curIndex)
         {
-            DictSetElementExists(existsList, curIndex, 0);
-            return 1;
+            memcpy(curKey, DictGetKey(body, keySize, valueSize, nextIndex % length), keySize + valueSize);
+
+            curIndex = nextIndex;
+            curKey = nextKey;
         }
 
-        while(nextHash == nextIndex)
-        {
-            nextIndex = (nextIndex + 1) % length;
-            nextKey = DictGetKey(body, keySize, valueSize, nextIndex);
-            nextHash = hashFunction(keySize, nextKey) % length;
-        }
-
-        memcpy(curKey, DictGetKey(body, keySize, valueSize, nextIndex), keySize + valueSize);
-
-        curIndex = nextIndex, 
-        nextIndex = (nextIndex + 1) % length, 
-        curKey = nextKey;
-        nextKey = DictGetKey(body, keySize, valueSize, nextIndex); 
+        nextIndex++;
+        nextKey = DictGetKey(body, keySize, valueSize, nextIndex % length); 
         nextHash = hashFunction(keySize, nextKey) % length;
     }
 
-    return 0;
+    DictSetElementExists(existsList, curIndex % length, 0);
+    return 1;
 }
 
 int DictIterate(ExistsListNum *existsList, const size_t length, const size_t startIndex, size_t *nextElementIndexDest)
@@ -142,7 +148,7 @@ int DictIterate(ExistsListNum *existsList, const size_t length, const size_t sta
     return 0;
 }
 
-int DictResize(ExistsListNum **existsList, void **body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t newLength)
+int DictResize(ExistsListNum **existsList, void **body, size_t *length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t newLength)
 {
     size_t newBodySize = DictGetBodySize(newLength, keySize, valueSize);
     size_t newExistsListSize = DictGetExistsListSize(newLength);
@@ -152,7 +158,7 @@ int DictResize(ExistsListNum **existsList, void **body, const size_t length, con
     if(newBody == NULL)
         return 0;
 
-    for(size_t index = 0; DictIterate(*existsList, length, index, &index); index++)
+    for(size_t index = 0; DictIterate(*existsList, *length, index, &index); index++)
     {
         void *key = DictGetKey(*body, keySize, valueSize, index);
         void *value = DictGetValue(*body, keySize, valueSize, index);
@@ -163,11 +169,12 @@ int DictResize(ExistsListNum **existsList, void **body, const size_t length, con
     free(*body);
     *existsList = newExistsList;
     *body = newBody;
+    *length = newLength;
 
     return 1;
 }
 
-size_t DictDefaultHash(size_t keySize, void *key)
+size_t DictDefaultHash(const size_t keySize, const void *key)
 {
     size_t hash = 5381;
 
@@ -180,7 +187,7 @@ size_t DictDefaultHash(size_t keySize, void *key)
     return hash;
 }
 
-int DictDefaultEquate(size_t keySize, void *keyA, void *keyB)
+int DictDefaultEquate(const size_t keySize, const void *keyA, const void *keyB)
 {
     int equal = 1;
 
@@ -190,4 +197,7 @@ int DictDefaultEquate(size_t keySize, void *keyA, void *keyB)
     return equal;
 }
 
-
+void DictFree(void *body)
+{
+    free(body);
+}

@@ -22,15 +22,15 @@ void CArrayRemove(void *array, size_t *count, const size_t length, size_t *offse
 size_t DictGetBodySize(const size_t length, const size_t keySize, const size_t valueSize);
 size_t DictGetExistsListSize(const size_t length);
 int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t length, const size_t keySize, const size_t valueSize);
-void DictSetElementExists(ExistsListNum *existsList, const size_t index, const int exists);
 void *DictGetKey(void *body, const size_t keySize, const size_t valueSize, const size_t index);
 void *DictGetValue(void *body, const size_t keySize, const size_t valueSize, const size_t index);
 int DictIndexOf(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const void *key, EqualityFunction keyEqualityFunction, size_t *indexDest);
 int DictAdd(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const void *key, const void *value);
 int DictRemove(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t index);
 int DictIterate(ExistsListNum *existsList, const size_t length, const size_t startIndex, size_t *nextElementIndexDest);
-int DictResize(ExistsListNum **existsList, void **body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t newLength);
-size_t DictDefaultHash(size_t keySize, void *key);
-int DictDefaultEquate(size_t keySize, void *keyA, void *keyB);
+int DictResize(ExistsListNum **existsList, void **body, size_t *length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t newLength);
+size_t DictDefaultHash(const size_t keySize, const void *key);
+int DictDefaultEquate(const size_t keySize, const void *keyA, const void *keyB);
+void DictFree(void *body);
 
 #endif
