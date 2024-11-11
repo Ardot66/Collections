@@ -4,31 +4,43 @@
 
 int ArrayResize(void **array, size_t *length, const size_t elementSize, const size_t newLength)
 {
-    void *temp = realloc(*array, elementSize * newLength);
-    
+    void *temp = realloc(*array, elementSize * newLength);   
+
     if(temp == NULL)
-        return 0;
+        return errno;
 
     *array = temp;
     *length = newLength;
 
-    return 1;
+    return 0;
 }
 
-void ArrayInsert(void *array, size_t *count, const size_t elementSize, const size_t index, const void *element)
+int ArrayInsert(void **array, size_t *count, size_t *length, const size_t elementSize, const size_t index, const void *element)
 {
-    for(size_t x = *count * elementSize; x > index * elementSize; x--)
-        ((char *)array)[x] = ((char *)array)[x - elementSize];
+    if(*count >= *length)
+    {
+        size_t newLength = *length * 2 + (*length == 0);
 
-    memcpy(((char *)array) + index * elementSize, element, elementSize);
+        int result = ArrayResize(array, length, elementSize, newLength);
+        if(result)
+            return result;
+    }
+
+    char *const arrayBody = (char *)*array;
+
+    for(size_t x = *count * elementSize; x > index * elementSize; x--)
+        arrayBody[x] = arrayBody[x - elementSize];
+
+    memcpy(arrayBody + index * elementSize, element, elementSize);
 
     *count += 1;
 }
 
 void ArrayRemove(void *array, size_t *count, const size_t elementSize, const size_t index)
 {
+    char *const arrayBody = (char *)array; 
     *count -= 1;
 
     for(size_t x = index * elementSize; x < *count * elementSize; x++)
-        ((char *)array)[x] = ((char*)array)[x + elementSize];
+        arrayBody[x] = arrayBody[x + elementSize];
 }

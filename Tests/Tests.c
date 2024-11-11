@@ -71,23 +71,23 @@ void TestCArray()
 void TestArray()
 {
     const size_t arrayInitialLength = 10;
-    size_t arrayLength = arrayInitialLength;
-    size_t testData[arrayLength];
 
-    size_t arrayOffset = 0;
-    size_t arrayCount = 0;
-    size_t *array = malloc(sizeof(size_t) * arrayLength);
+    size_t length = arrayInitialLength;
+    size_t count = 0;
+    size_t *array = malloc(sizeof(size_t) * length);
+
+    size_t testData[length];
 
     for(ssize_t x = arrayInitialLength - 1; x >= 0; x--)
     {
         testData[x] = (x * 129 / 3) % 61;
-        ArrayInsert(array, &arrayCount, sizeof(size_t), 0, testData + x);
+        ArrayInsert((void **)&array, &count, &length, sizeof(size_t), 0, testData + x);
     }
 
-    ArrayRemove(array, &arrayCount, sizeof(size_t), 0);
-    ArrayRemove(array, &arrayCount, sizeof(size_t), arrayCount - 1);
+    ArrayRemove(array, &count, sizeof(size_t), 0);
+    ArrayRemove(array, &count, sizeof(size_t), count - 1);
 
-    if(!ArrayResize((void**)&array, &arrayLength, sizeof(size_t), arrayLength - 2) || arrayLength != arrayInitialLength - 2 || !ArrayResize((void**)&array, &arrayLength, sizeof(size_t), arrayInitialLength + 20) || arrayLength != arrayInitialLength + 20)
+    if(ArrayResize((void **)&array, &length, sizeof(size_t), length - 2) || length != arrayInitialLength - 2 || ArrayResize((void **)&array, &length, sizeof(size_t), arrayInitialLength + 20) || length != arrayInitialLength + 20)
         FAIL("Failed to resize Array")
     else
         PASS("Successfully resized Array")

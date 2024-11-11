@@ -8,7 +8,7 @@ typedef size_t (*HashFunction)(const size_t keySize, const void *key);
 typedef int (*EqualityFunction)(const size_t size, const void *a, const void *b);
 
 int ArrayResize(void **array, size_t *length, const size_t elementSize, const size_t newLength);
-void ArrayInsert(void *array, size_t *count, const size_t elementSize, const size_t index, const void *element);
+int ArrayInsert(void **array, size_t *count, size_t *length, const size_t elementSize, const size_t index, const void *element);
 void ArrayRemove(void *array, size_t *count, const size_t elementSize, const size_t index);
 
 void *CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index);
