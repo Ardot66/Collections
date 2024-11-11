@@ -26,7 +26,7 @@ $(DLL): $(LOCAL_HEADERS) $(SOURCE)/$(DICT_NAME).c $(SOURCE)/$(ARRAY_NAME).c $(SO
 	gcc -fPIC -c $(SOURCE)/$(CARRAY_NAME).c -o $(TEMP)/$(CARRAY_NAME).o
 	gcc -s -shared $(TEMP)/$(ARRAY_NAME).o $(TEMP)/$(CARRAY_NAME).o $(TEMP)/$(DICT_NAME).o -o $(DLL)
 
-$(TESTS_EXE): $(LOCAL_HEADERS) $(DLL)
+$(TESTS_EXE): $(LOCAL_HEADERS) $(DLL) $(TESTS)/$(TESTS_NAME).c
 	gcc -c $(TESTS)/$(TESTS_NAME).c -o $(TEMP)/$(TESTS_NAME).o
 	gcc -s -L$(BIN) -l$(NAME) $(TEMP)/$(TESTS_NAME).o -o $(TESTS_EXE)
 
