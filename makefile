@@ -14,8 +14,9 @@ TESTS_NAME = Tests
 DLL := $(BIN)/lib$(NAME).dll
 TESTS_EXE := $(BIN)/$(TESTS_NAME).exe
 
-LOCAL_HEADERS := $(abspath $(wildcard */*.h))
-LOCAL_INCLUDE := $(dir $(addprefix -I,$(HEADERS)))
+LOCAL_HEADERS := $(abspath $(wildcard */*.h Libraries/*/*/*.h))
+LOCAL_INCLUDE := $(dir $(addprefix -I,$(LOCAL_HEADERS)))
+
 
 All: $(DLL) $(TESTS_EXE)
 	$(TESTS_EXE)
@@ -27,7 +28,7 @@ $(DLL): $(LOCAL_HEADERS) $(SOURCE)/$(DICT_NAME).c $(SOURCE)/$(ARRAY_NAME).c $(SO
 	gcc -s -shared $(TEMP)/$(ARRAY_NAME).o $(TEMP)/$(CARRAY_NAME).o $(TEMP)/$(DICT_NAME).o -o $(DLL)
 
 $(TESTS_EXE): $(LOCAL_HEADERS) $(DLL) $(TESTS)/$(TESTS_NAME).c
-	gcc -c $(TESTS)/$(TESTS_NAME).c -o $(TEMP)/$(TESTS_NAME).o
+	gcc -c $(LOCAL_INCLUDE) $(TESTS)/$(TESTS_NAME).c -o $(TEMP)/$(TESTS_NAME).o
 	gcc -s -L$(BIN) -l$(NAME) $(TEMP)/$(TESTS_NAME).o -o $(TESTS_EXE)
 
 Clean:
