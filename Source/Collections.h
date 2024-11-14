@@ -11,11 +11,20 @@ int ArrayResize(void **array, size_t *length, const size_t elementSize, const si
 int ArrayInsert(void **array, size_t *count, size_t *length, const size_t elementSize, const size_t index, const void *element);
 void ArrayRemove(void *array, size_t *count, const size_t elementSize, const size_t index);
 
-void *CArrayGet(const void *array, const size_t length, const size_t offset, const size_t elementSize, const size_t index);
-void CArrayResizeElements(void *array, const size_t count, const size_t length, size_t *arrayOffset, const size_t elementSize, const size_t newLength);
-int CArrayResize(void **array, const size_t count, size_t *length, size_t *arrayOffset, const size_t elementSize, const size_t newLength);
-void CArrayInsert(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index, const void *element);
-void CArrayRemove(void *array, size_t *count, const size_t length, size_t *offset, const size_t elementSize, const size_t index);
+typedef struct CArray CArray;
+struct CArray
+{
+    void *Body;
+    size_t Length;
+    size_t Count;
+    size_t Offset;
+};
+
+#define CArrayGet(cArray, elementSize, index) ((void *)(((char *)(cArray)->Body) + ((index + (cArray)->Offset) % (cArray)->Length) * elementSize))
+
+int CArrayResize(CArray *cArray, const size_t elementSize, const size_t newLength);
+int CArrayInsert(CArray *cArray, const size_t elementSize, const size_t index, const void *element);
+void CArrayRemove(CArray *cArray, const size_t elementSize, const size_t index);
 
 size_t DictGetBodySize(const size_t length, const size_t keySize, const size_t valueSize);
 size_t DictGetExistsListSize(const size_t length);

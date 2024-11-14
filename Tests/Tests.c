@@ -1,71 +1,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../Source/Collections.h"
+#include "Collections.h"
+#include "TestingUtilities.h"
 
 #define PASS(message) {printf("Test Passed: %s\n", message); TestCount ++; TestsPassed ++;}
 #define FAIL(message) {printf("Test Failed: %s\n", message); TestCount ++;}
 
 size_t TestCount = 0;
-size_t TestsPassed = 0;
 
 void TestCArray()
 {
     const size_t startingCArrayLength = 10;
-    size_t cArrayLength = startingCArrayLength;
-    size_t testData[cArrayLength];
 
-    size_t cArrayOffset = 0;
-    size_t cArrayCount = 0;
-    size_t *cArray = malloc(sizeof(size_t) * cArrayLength);
+    //Internal array type is size_t
+    CArray cArray;
 
-    for(size_t x = 0; x < cArrayLength; x++)
-    {
-        testData[x] = (x * 129 / 3) % 61;
-        *(size_t *)CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), cArrayCount) = testData[x];
-        cArrayCount++;
-    }
+    cArray.Count = 1;
+    cArray.Length = 1;
+    cArray.Offset = 0;
+    cArray.Body = malloc(sizeof(size_t));
 
-    CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 0);
-    CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 0);
-    size_t value = 0;
-    value = *(size_t *)CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), 1);
-    CArrayInsert(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 1, &value);
-    CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), 2);
-    CArrayRemove(cArray, &cArrayCount, cArrayLength, &cArrayOffset, sizeof(size_t), cArrayCount);
+    TEST(cArray.Body, !=, NULL, p, return;)
+    TEST(CArrayGet(&cArray, sizeof(size_t), 0), ==, cArray.Body, p, return;)
 
-    if(cArrayCount == cArrayLength - 3 && cArrayOffset == 2)
-        PASS("Successfully removed items from CArray")
-    else
-        FAIL("Failed to remove items from CArray")
+    const size_t preInsertCheckNum = 1;
+    *(size_t *)CArrayGet(&cArray, sizeof(size_t), 0) = preInsertCheckNum;
 
-    if(!CArrayResize((void**)&cArray, cArrayCount, &cArrayLength, &cArrayOffset, sizeof(size_t), cArrayLength - 3) || cArrayCount != cArrayLength || !CArrayResize((void**)&cArray, cArrayCount, &cArrayLength, &cArrayOffset, sizeof(size_t), cArrayLength + 50))
-        FAIL("Failed to resize CArray")
-    else
-        PASS("Successfully resized CArray")
+    int result = 0;
+    const size_t insertedAmount = 2;
+    result = CArrayInsert(&cArray, sizeof(size_t), 1, &insertedAmount);
+    
+    TEST(result, ==, 0, llu, return;)
+    TEST(cArray.Count, ==, 2, llu)
+    TEST(cArray.Length, >=, cArray.Count, llu)
 
-    int getSuccessful = 1;
+    const size_t insertedAmount2 = 3;
+    TEST(result = CArrayInsert(&cArray, sizeof(size_t), 0, &insertedAmount2), ==, 0, llu, return;)
+    TEST(*(size_t *)CArrayGet(&cArray, sizeof(size_t), 1), ==, preInsertCheckNum, llu)
+    
+    CArrayRemove(&cArray, sizeof(size_t), 1);
+    const size_t postRemoveCheckNum = 4;
+    TEST(result = CArrayInsert(&cArray, sizeof(size_t), 1, &postRemoveCheckNum), ==, 0, llu, return;)
 
-    for(size_t x = 0, index = 0; x < startingCArrayLength; x++, index++)
-    {
-        size_t value;
+    TEST(result = CArrayResize(&cArray, sizeof(size_t), cArray.Length * 2), ==, 0, llu, return;)
 
-        if(x == 0 || x == 1 || x == startingCArrayLength - 1)
-        {
-            index --;
-            continue;
-        }
-
-        value = *(size_t*)CArrayGet(cArray, cArrayLength, cArrayOffset, sizeof(size_t), index);
-        getSuccessful &= value == testData[x];
-    }
-
-    if(getSuccessful)
-        PASS("Successfully read data from CArray\n")
-    else
-        FAIL("Failed to read data from CArray\n")
-
-    free(cArray);
+    TEST(*(size_t *)CArrayGet(&cArray, sizeof(size_t), 0), ==, insertedAmount2, llu)
+    TEST(*(size_t *)CArrayGet(&cArray, sizeof(size_t), 1), ==, postRemoveCheckNum, llu)
+    TEST(*(size_t *)CArrayGet(&cArray, sizeof(size_t), 2), ==, insertedAmount, llu)
 }
 
 void TestArray()
