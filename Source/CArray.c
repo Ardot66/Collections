@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <stdio.h>
-
 static void CArrayResizeElements(CArray *cArray, const size_t elementSize, const size_t newLength)
 {
     size_t newOffset = (((cArray->Offset + cArray->Count) % cArray->Length) % newLength);
