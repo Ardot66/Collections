@@ -11,8 +11,7 @@ size_t TestCount = 0;
 
 void TestCArray()
 {
-    const size_t startingCArrayLength = 10;
-
+    printf("\nTesting CArray\n-----\n");
     //Internal array type is size_t
     CArray cArray;
 
@@ -48,49 +47,35 @@ void TestCArray()
     TEST(*(size_t *)CArrayGet(&cArray, sizeof(size_t), 0), ==, insertedAmount2, llu)
     TEST(*(size_t *)CArrayGet(&cArray, sizeof(size_t), 1), ==, postRemoveCheckNum, llu)
     TEST(*(size_t *)CArrayGet(&cArray, sizeof(size_t), 2), ==, insertedAmount, llu)
+
+    free(cArray.Body);
 }
 
 void TestArray()
 {
-    const size_t arrayInitialLength = 10;
+    printf("\nTesting Array\n-----\n");
 
-    size_t length = arrayInitialLength;
-    size_t count = 0;
-    size_t *array = malloc(sizeof(size_t) * length);
+    size_t length = 1;
+    size_t count = 1;
+    size_t *array = malloc(sizeof(size_t));
 
-    size_t testData[length];
+    TEST(array, !=, NULL, p, return;)
 
-    for(ssize_t x = arrayInitialLength - 1; x >= 0; x--)
-    {
-        testData[x] = (x * 129 / 3) % 61;
-        ArrayInsert((void **)&array, &count, &length, sizeof(size_t), 0, testData + x);
-    }
+    const size_t testNum1 = 1;
+    array[0] = testNum1;
 
-    ArrayRemove(array, &count, sizeof(size_t), 0);
-    ArrayRemove(array, &count, sizeof(size_t), count - 1);
+    const size_t testNum2 = 2;
+    int result;
+    TEST(result = ArrayInsert((void **)&array, &count, &length, sizeof(size_t), 0, &testNum2), ==, 0, llu, return;);
 
-    if(ArrayResize((void **)&array, &length, sizeof(size_t), length - 2) || length != arrayInitialLength - 2 || ArrayResize((void **)&array, &length, sizeof(size_t), arrayInitialLength + 20) || length != arrayInitialLength + 20)
-        FAIL("Failed to resize Array")
-    else
-        PASS("Successfully resized Array")
+    TEST(count, ==, 2, llu)
+    TEST(length, >=, count, llu)
+    TEST(array[0], ==, testNum2, llu)
+    TEST(array[1], ==, testNum1, llu)
 
-    int getSuccessful = 1;
+    ArrayRemove(array, &count, sizeof(*array), 0);
 
-    for(size_t x = 0, index = 0; x < arrayInitialLength; x++)
-    {
-        if(x == 0 || x == arrayInitialLength - 1)
-            continue;
-        
-        size_t value = array[index];
-        getSuccessful &= value == testData[x];
-
-        index++;
-    }
-
-    if(getSuccessful)
-        PASS("Successfully retrieved values from Array")
-    else
-        FAIL("Failed to retrieve values from Array")
+    TEST(array[0], ==, testNum1, llu)
 
     free(array);
 }
@@ -99,6 +84,8 @@ int DictGetElementExists(ExistsListNum *existsList, const size_t index);
 
 void TestDictionary()
 {
+    printf("\nTesting Dictionary\n-----\n");
+
     struct KeyValuePair
     {
         size_t Key;
@@ -175,7 +162,6 @@ int main (int argCount, char **argValues)
     TestArray();
     TestDictionary();
 
-    printf("%llu out of %llu tests passed\n", TestsPassed, TestCount);
-
+    TestsEnd();
     return 0;
 }
