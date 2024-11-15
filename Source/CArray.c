@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CARRAY_GETTER (char *)cArray->Body + (getIndex + cArray->Offset * elementSize) % (cArray->Length * elementSize)
+
 static void CArrayResizeElements(CArray *cArray, const size_t elementSize, const size_t newLength)
 {
     size_t newOffset = (((cArray->Offset + cArray->Count) % cArray->Length) % newLength);
@@ -49,22 +51,18 @@ int CArrayResize(CArray *cArray, const size_t elementSize, const size_t newLengt
 
 int CArrayInsert(CArray *cArray, const size_t elementSize, const size_t index, const void *element)
 {
-    if(cArray->Count >= cArray->Length)
-    {
-        size_t newLength = cArray->Length * 2 + (cArray->Length == 0);
-        int result;
-
-        if(result = CArrayResize(cArray, elementSize, newLength)) return result;
-    }
+    ARRAY_GENERIC_TRY_RESIZE(cArray->Count, cArray->Length, 
+        CArrayResize(cArray, elementSize, cArray->Length * 2 + (cArray->Length == 0)), 
+        return result;
+    )
 
     if(index == 0)
         cArray->Offset = (cArray->Offset <= 0) * (cArray->Length - 1) + (cArray->Offset > 0) * ((cArray->Offset - 1) % cArray->Length);
     else
-        for(size_t x = cArray->Count; x > index; x--)
-            memcpy(CArrayGet(cArray, elementSize, x), CArrayGet(cArray, elementSize, x - 1), elementSize);
+        ARRAY_GENERIC_RIGHTSHIFT(char, elementSize, 1, index, cArray->Count - index, CARRAY_GETTER)
 
+    ARRAY_GENERIC_SET(char, elementSize, index, element, CARRAY_GETTER)
     cArray->Count += 1;
-    memcpy(CArrayGet(cArray, elementSize, index), element, elementSize);
 
     return 0;
 }
@@ -74,11 +72,7 @@ void CArrayRemove(CArray *cArray, const size_t elementSize, const size_t index)
     cArray->Count -= 1;
 
     if(index == 0)
-    {
         cArray->Offset = (cArray->Offset + 1) % cArray->Length;
-        return;
-    }
-
-    for(size_t x = index; x < cArray->Count; x++)
-        memcpy(CArrayGet(cArray, elementSize, x), CArrayGet(cArray, elementSize, x + 1), elementSize);
+    else
+        ARRAY_GENERIC_LEFTSHIFT(char, elementSize, 1, index + 1, cArray->Count - index, CARRAY_GETTER)
 }
