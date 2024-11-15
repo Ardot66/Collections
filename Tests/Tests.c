@@ -4,11 +4,6 @@
 #include "Collections.h"
 #include "TestingUtilities.h"
 
-#define PASS(message) {printf("Test Passed: %s\n", message); TestCount ++; TestsPassed ++;}
-#define FAIL(message) {printf("Test Failed: %s\n", message); TestCount ++;}
-
-size_t TestCount = 0;
-
 void TestCArray()
 {
     printf("\nTesting CArray\n-----\n");
@@ -115,10 +110,7 @@ void TestDictionary()
         addSuccessful &= DictAdd(existsList, body, dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, &dictValue.Key, &dictValue.Value);
     }
 
-    if(addSuccessful)
-        PASS("Successfully added items to dictionary")
-    else
-        FAIL("Failed to add items to dictionary")
+    TEST(addSuccessful, ==, 1, d)
 
     size_t index = 0;
 
@@ -148,10 +140,7 @@ void TestDictionary()
         getSuccessful &= dictValue.Value == *value;
     }
 
-    if(getSuccessful)
-        PASS("Successfully retrieved items from dictionary")
-    else
-        FAIL("Failed to retrieve items from dictionary")
+    TEST(getSuccessful, ==, 1, d)
 
     DictFree(body);
 }
