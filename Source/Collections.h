@@ -38,12 +38,12 @@
     const size_t scaledElementSize = elementSize / sizeof(arrayType);\
     size_t getIndex;\
 \
-    for(getIndex = (index + count) * scaledElementSize; getIndex > (index) * scaledElementSize; getIndex--)\
+    for(getIndex = ((index) + (count)) * scaledElementSize - 1; getIndex >= (index) * scaledElementSize & getIndex != SIZE_MAX; getIndex--)\
     {\
+        getIndex += scaledElementSize * (shift);\
         arrayType *to = (getter);\
         getIndex -= scaledElementSize * (shift);\
         arrayType *from = (getter);\
-        getIndex += scaledElementSize * (shift);\
         *to = *from;\
     }\
 }
