@@ -3,6 +3,68 @@
 
 #include <stddef.h>
 
+// Tries to resize an array if count is larger than or equal to length.
+// Resizer should increase the size of the array and produce an int result.
+// Any code in failHandler will only run if the result from resizer is non-zero.
+#define ARRAY_GENERIC_TRY_RESIZE(count, length, resizer, failHandler)\
+{\
+    if((count) >= (length))\
+    {\
+        int result = resizer;\
+\
+        if(result)\
+        {\
+            failHandler\
+        }\
+    }\
+}
+
+// Sets an element in an array at a specific index.
+// The element passed should be a void*.
+// Getter should produce a arrayType* to the element in the array at the index specified by the size_t variable [getIndex].
+#define ARRAY_GENERIC_SET(arrayType, elementSize, index, element, getter)\
+{\
+    const size_t scaledElementSize = elementSize / sizeof(arrayType);\
+    size_t getIndex = index * scaledElementSize;\
+\
+    for(size_t x = 0; x < scaledElementSize; x++, getIndex++)\
+        *(arrayType *)(getter) = *((arrayType *)element + x);\
+}
+
+// Moves a segment of an array starting at [index] that is [count] indices long [shift] indices to the right.
+// Getter should produce a arrayType* to the element in the array at the index specified by the size_t variable [getIndex].
+#define ARRAY_GENERIC_RIGHTSHIFT(arrayType, elementSize, shift, index, count, getter) \
+{\
+    const size_t scaledElementSize = elementSize / sizeof(arrayType);\
+    size_t getIndex;\
+\
+    for(getIndex = (index + count) * scaledElementSize; getIndex > (index) * scaledElementSize; getIndex--)\
+    {\
+        arrayType *to = (getter);\
+        getIndex -= scaledElementSize * (shift);\
+        arrayType *from = (getter);\
+        getIndex += scaledElementSize * (shift);\
+        *to = *from;\
+    }\
+}
+
+// Moves a segment of an array starting at [index] that is [count] indices long [shift] indices to the left.
+// Getter should produce a arrayType* to the element in the array at the index specified by the size_t variable [getIndex].
+#define ARRAY_GENERIC_LEFTSHIFT(arrayType, elementSize, shift, index, count, getter)\
+{\
+    const size_t scaledElementSize = elementSize / sizeof(arrayType);\
+    size_t getIndex;\
+\
+    for(getIndex = (index) * scaledElementSize; getIndex < ((count) + (index)) * scaledElementSize; getIndex++)\
+    {\
+        getIndex -= scaledElementSize * (shift);\
+        arrayType *to = (getter);\
+        getIndex += scaledElementSize * (shift);\
+        arrayType *from = (getter);\
+        *to = *from;\
+    }\
+}
+
 typedef unsigned int ExistsListNum;
 typedef size_t (*HashFunction)(const size_t keySize, const void *key);
 typedef int (*EqualityFunction)(const size_t size, const void *a, const void *b);
