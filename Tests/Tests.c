@@ -75,75 +75,74 @@ void TestArray()
     free(array);
 }
 
-int DictGetElementExists(ExistsListNum *existsList, const size_t index);
+
+#define SIZES sizeof(size_t), sizeof(size_t)
+void TestDictionaryValue(const Dictionary *dictionary, const size_t key, const size_t checkValue)
+{
+    size_t valueIndex;
+    TEST(DictIndexOf(dictionary, SIZES, DictDefaultHash, DictDefaultEquate, &key, &valueIndex), ==, 0, d, return;)
+    TEST(*(size_t *)DictGetKey(dictionary, SIZES, valueIndex), ==, checkValue, llu);
+}
 
 void TestDictionary()
 {
     printf("\nTesting Dictionary\n-----\n");
 
-    struct KeyValuePair
+    typedef struct KeyValuePair
     {
         size_t Key;
         size_t Value;
-    };
+    } KeyValuePair;
 
-    const size_t dictInitialLength = 1000;
-    size_t dictLength = dictInitialLength;
-    void *body;
-    ExistsListNum *existsList;
+    Dictionary dictionary;
+    dictionary.Length = 4;
+    dictionary.Count = 0;
+    dictionary.Body = malloc(DictGetSize(dictionary.Length, SIZES));
 
-    int allocationSuccess = DictAllocate(&existsList, &body, dictLength, sizeof(size_t), sizeof(size_t));
+    TEST(dictionary.Body, !=, NULL, p, return;)
+    DictInit(&dictionary, SIZES);
 
-    size_t dictValuesLength = dictInitialLength / 2;
-    struct KeyValuePair dictValues[dictValuesLength];
+    const KeyValuePair pair1 = {.Key = 1, .Value = 1};
+    TEST(DictAdd(&dictionary, SIZES, DictDefaultHash, 60, &pair1.Key, &pair1.Value), ==, 0, llu)
 
-    int addSuccessful = 1;
+    TestDictionaryValue(&dictionary, pair1.Key, pair1.Value);
 
-    for(size_t x = 0; x < dictValuesLength; x++)
+    const size_t fillerStart = 256;
+    const size_t fillerAmount = 50;
+    int addFillerSuccessful = 1;
+
+    for(size_t x = fillerStart; x < fillerAmount + fillerStart; x++)
     {
-        struct KeyValuePair dictValue;
-        dictValue.Key = (x * 129 / 3);
-        dictValue.Value = x;
+        KeyValuePair fillerPair = {.Key = x, .Value = x};
+        addFillerSuccessful &= !DictAdd(&dictionary, SIZES, DictDefaultHash, 60, &fillerPair.Key, &fillerPair.Value);
 
-        dictValues[x] = dictValue;
-
-        addSuccessful &= DictAdd(existsList, body, dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, &dictValue.Key, &dictValue.Value);
+        if(!addFillerSuccessful)
+            break;
     }
 
-    TEST(addSuccessful, ==, 1, d)
+    TEST(addFillerSuccessful, ==, 1, d)
 
-    size_t index = 0;
+    TestDictionaryValue(&dictionary, pair1.Key, pair1.Value);
 
-    DictIndexOf(existsList, body, dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, &(dictValues[3].Key), DictDefaultEquate, &index);
-    DictRemove(existsList, body, dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, index);
+    const size_t fillerRemoveAmount = 10;
+    int removeFillerSuccessful = 1;
 
-    int resizeSuccessful = DictResize(&existsList, &body, &dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, dictLength - 1);
-
-    int getSuccessful = 1;
-
-    for(size_t x = 0; x < dictValuesLength; x++)
+    for(size_t x = fillerStart; x < fillerRemoveAmount + fillerStart; x++)
     {
-        struct KeyValuePair dictValue = dictValues[x];
+        size_t index;
+        removeFillerSuccessful &= !DictIndexOf(&dictionary, SIZES, DictDefaultHash, DictDefaultEquate, &x, &index);
 
-        if(dictValue.Value == 3)
-            continue;
+        if(!removeFillerSuccessful)
+            break;
 
-        size_t valueIndex = 0;
-        int indexOfSuccessful = DictIndexOf(existsList, body, dictLength, sizeof(size_t), sizeof(size_t), DictDefaultHash, &dictValue.Key, DictDefaultEquate, &valueIndex);
-        getSuccessful &= indexOfSuccessful;
-
-        if(!indexOfSuccessful)
-            printf("Unsuccessful, Key: %llu\n", dictValue.Key);
-
-        size_t *value = (size_t *)DictGetValue(body, sizeof(size_t), sizeof(size_t), valueIndex);
-
-        getSuccessful &= dictValue.Value == *value;
+        DictRemove(&dictionary, SIZES, DictDefaultHash, index);
     }
 
-    TEST(getSuccessful, ==, 1, d)
+    TEST(removeFillerSuccessful, ==, 1, d)
 
-    DictFree(body);
+    TestDictionaryValue(&dictionary, pair1.Key, pair1.Value);
 }
+#undef SIZES
 
 int main (int argCount, char **argValues)
 {
@@ -151,6 +150,8 @@ int main (int argCount, char **argValues)
     TestArray();
     TestDictionary();
 
+    printf("\n");
     TestsEnd();
+    printf("-----\n");
     return 0;
 }

@@ -88,19 +88,32 @@ int CArrayResize(CArray *cArray, const size_t elementSize, const size_t newLengt
 int CArrayInsert(CArray *cArray, const size_t elementSize, const size_t index, const void *element);
 void CArrayRemove(CArray *cArray, const size_t elementSize, const size_t index);
 
-size_t DictGetBodySize(const size_t length, const size_t keySize, const size_t valueSize);
-size_t DictGetExistsListSize(const size_t length);
-void DictSetup(ExistsListNum *existsList, const size_t length);
-int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t length, const size_t keySize, const size_t valueSize);
-void *DictGetKey(void *body, const size_t keySize, const size_t valueSize, const size_t index);
-void *DictGetValue(void *body, const size_t keySize, const size_t valueSize, const size_t index);
-int DictIndexOf(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const void *key, EqualityFunction keyEqualityFunction, size_t *indexDest);
-int DictAdd(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const void *key, const void *value);
-int DictRemove(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t index);
-int DictIterate(ExistsListNum *existsList, const size_t length, const size_t startIndex, size_t *nextElementIndexDest);
-int DictResize(ExistsListNum **existsList, void **body, size_t *length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t newLength);
+typedef struct Dictionary Dictionary;
+struct Dictionary
+{
+    size_t Length;
+    size_t Count;
+    void *Body;
+};
+
+static inline void *DictGetKey(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, const size_t index)
+{
+    return ((char *)dictionary->Body) + index * (keySize + valueSize);
+}
+
+static inline void *DictGetValue(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, const size_t index)
+{
+    return ((char *)dictionary->Body) + index * (keySize + valueSize) + keySize;
+}
+
+size_t DictGetSize(const size_t length, const size_t keySize, const size_t valueSize);
+void DictInit(Dictionary *dictionary, const size_t keySize, const size_t valueSize);
+int DictIndexOf(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const EqualityFunction keyEqualityFunction, const void *key, size_t *indexDest);
+int DictResize(Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const size_t newLength);
+int DictAdd(Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const size_t resizePercentage, const void *key, const void *value);
+void DictRemove(Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const size_t index);
+int DictIterate(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, size_t *index);
 size_t DictDefaultHash(const size_t keySize, const void *key);
 int DictDefaultEquate(const size_t keySize, const void *keyA, const void *keyB);
-void DictFree(void *body);
 
 #endif

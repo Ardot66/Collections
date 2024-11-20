@@ -2,182 +2,176 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BITS(type) (sizeof(type) * CHAR_BIT)
+#include <stdio.h>
 
-size_t DictGetBodySize(const size_t length, const size_t keySize, const size_t valueSize)
+#define SIZE_BITS(type) (sizeof(type) * CHAR_BIT)
+typedef size_t ExistsListInt;
+
+static inline size_t DictGetExistsListCount(const size_t length)
 {
-    return (keySize + valueSize) * length;
+    return length / SIZE_BITS(ExistsListNum) + (length % SIZE_BITS(ExistsListNum) != 0);
 }
 
-size_t DictGetExistsListSize(const size_t length)
+static inline ExistsListInt *DictGetExistsList(const Dictionary *dictionary, const size_t keySize, const size_t valueSize)
 {
-    return (length / BITS(ExistsListNum) + (length % BITS(ExistsListNum) != 0)) * sizeof(ExistsListNum);
+    return (ExistsListInt *)((char *)dictionary->Body + (keySize + valueSize) * dictionary->Length);
 }
 
-void DictSetup(ExistsListNum *existsList, const size_t length)
+static inline int DictGetElementExists(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, const size_t index)
 {
-    size_t existsListCount = DictGetExistsListSize(length) / sizeof(ExistsListNum);
+    ExistsListInt *existsList = DictGetExistsList(dictionary, keySize, valueSize);
+    return (existsList[index / SIZE_BITS(ExistsListNum)] >> SIZE_BITS(ExistsListNum) - 1 - (index % SIZE_BITS(ExistsListNum))) & 0x1;
+}
+
+static inline void DictSetElementExists(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, const size_t index, const int exists)
+{
+    ExistsListInt *existsList = DictGetExistsList(dictionary, keySize, valueSize);
+
+    size_t numIndex = index / SIZE_BITS(ExistsListNum);
+    size_t flipBit = 0x1 << (SIZE_BITS(ExistsListNum) - 1 - (index % SIZE_BITS(ExistsListNum)));
+
+    existsList[numIndex] = exists * (existsList[numIndex] | flipBit) + !exists * (existsList[numIndex] & ~flipBit);
+}
+
+size_t DictGetSize(const size_t length, const size_t keySize, const size_t valueSize)
+{
+    return length * (keySize + valueSize) + DictGetExistsListCount(length) * sizeof(ExistsListInt);
+}
+
+void DictInit(Dictionary *dictionary, const size_t keySize, const size_t valueSize)
+{
+    ExistsListInt *existsList = DictGetExistsList(dictionary, keySize, valueSize);
+    size_t existsListCount = DictGetExistsListCount(dictionary->Length);
 
     for(size_t x = 0; x < existsListCount; x++)
         existsList[x] = 0;
 }
 
-int DictAllocate(ExistsListNum **existsListDest, void **bodyDest, const size_t length, const size_t keySize, const size_t valueSize)
+int DictIndexOf(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const EqualityFunction keyEqualityFunction, const void *key, size_t *indexDest)
 {
-    size_t bodySize = DictGetBodySize(length, keySize, valueSize);
-    size_t existsListSize = DictGetExistsListSize(length);
-    void *body = malloc(bodySize + existsListSize);
+    size_t hash = hashFunction(keySize, key);
 
-    if(body == NULL)
+    for(size_t x = 0, checkIndex = hash % dictionary->Length; x < dictionary->Length; x++, checkIndex = (checkIndex + 1) % dictionary->Length)
+    {
+        if(!DictGetElementExists(dictionary, keySize, valueSize, checkIndex))
+            break;
+        
+        void *curKey = DictGetKey(dictionary, keySize, valueSize, checkIndex);
+
+        if(keyEqualityFunction(keySize, key, curKey))
+            continue;
+
+        *indexDest = checkIndex;
         return 0;
-
-    ExistsListNum *existsList = (ExistsListNum *)(((char *)body) + bodySize); 
-    DictSetup(existsList, length);
-
-    *bodyDest = body;
-    *existsListDest = existsList;
+    }
 
     return 1;
 }
 
-int DictGetElementExists(ExistsListNum *existsList, const size_t index)
+int DictResize(Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const size_t newLength)
 {
-    return (existsList[index / BITS(ExistsListNum)] >> BITS(ExistsListNum) - 1 - (index % BITS(ExistsListNum))) & 0x1;
-}
+    Dictionary newDictionary;
+    newDictionary.Count = 0;
+    newDictionary.Length = newLength;
+    newDictionary.Body = malloc(DictGetSize(newLength, keySize, valueSize));
 
-void DictSetElementExists(ExistsListNum *existsList, const size_t index, const int exists)
-{
-    size_t numIndex = index / BITS(ExistsListNum);
-    size_t flipBit = 0x1 << (BITS(ExistsListNum) - 1 - (index % BITS(ExistsListNum)));
+    if(newDictionary.Body == NULL)
+        return 1;
 
-    existsList[numIndex] = exists * (existsList[numIndex] | flipBit) + !exists * (existsList[numIndex] & ~flipBit);
-}
+    DictInit(&newDictionary, keySize, valueSize);
+    int result = 0;
 
-void *DictGetKey(void *body, const size_t keySize, const size_t valueSize, const size_t index)
-{
-    return ((char *)body) + index * (keySize + valueSize);
-}
+    for(size_t index = 0; !DictIterate(dictionary, keySize, valueSize, &index) && !result; index++)
+    {   
+        void *key = DictGetKey(dictionary, keySize, valueSize, index);
+        void *value = DictGetValue(dictionary, keySize, valueSize, index);
 
-void *DictGetValue(void *body, const size_t keySize, const size_t valueSize, const size_t index)
-{
-    return ((char *)body) + index * (keySize + valueSize) + keySize;
-}
-
-int DictIndexOf(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const void *key, EqualityFunction keyEqualityFunction, size_t *indexDest)
-{
-    size_t hash = hashFunction(keySize, key);
-
-    for(size_t x = 0, checkIndex = hash % length; x < length; x++, checkIndex = (checkIndex + 1) % length)
-    {
-        if(!DictGetElementExists(existsList, checkIndex))
-            break;
-        
-        void *curKey = DictGetKey(body, keySize, valueSize, checkIndex);
-
-        if(keyEqualityFunction(keySize, key, curKey))
-        {
-            *indexDest = checkIndex;
-            return 1;
-        }
+        result = DictAdd(&newDictionary, keySize, valueSize, hashFunction, 90, key, value);
     }
+
+    if(result)
+    {
+        free(newDictionary.Body);
+        return result;
+    }
+
+    free(dictionary->Body);
+    *dictionary = newDictionary;
 
     return 0;
 }
 
-int DictAdd(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const void *key, const void *value)
+int DictAdd(Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const size_t resizePercentage, const void *key, const void *value)
 {
+    if(dictionary->Length == 0 || dictionary->Count * 100 / dictionary->Length >= resizePercentage)
+    {
+        int result;
+        result = DictResize(dictionary, keySize, valueSize, hashFunction, dictionary->Length * 2 + (dictionary->Length == 0));
+
+        if(result)
+            return result;
+    }
+
     size_t hash = hashFunction(keySize, key);
 
-    for(size_t x = 0, checkIndex = hash % length; x < length; x++, checkIndex = (checkIndex + 1) % length)
+    for(size_t x = 0, checkIndex = hash % dictionary->Length; x < dictionary->Length; x++, checkIndex = (checkIndex + 1) % dictionary->Length)
     {
-        if(DictGetElementExists(existsList, checkIndex))
+        if(DictGetElementExists(dictionary, keySize, valueSize, checkIndex))
             continue;
-
-        void *keyDest = DictGetKey(body, keySize, valueSize, checkIndex);
-        void *valueDest = DictGetValue(body, keySize, valueSize, checkIndex);
+            
+        void *keyDest = DictGetKey(dictionary, keySize, valueSize, checkIndex);
+        void *valueDest = DictGetValue(dictionary, keySize, valueSize, checkIndex);
 
         memcpy(keyDest, key, keySize);
         memcpy(valueDest, value, valueSize);
 
-        DictSetElementExists(existsList, checkIndex, 1);
-        
-        return 1;
+        DictSetElementExists(dictionary, keySize, valueSize, checkIndex, 1);
+        dictionary->Count += 1;
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
-int DictRemove(ExistsListNum *existsList, void *body, const size_t length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t index)
+void DictRemove(Dictionary *dictionary, const size_t keySize, const size_t valueSize, const HashFunction hashFunction, const size_t index)
 {
     size_t curIndex = index;
     size_t nextIndex = index + 1;
-    void *curKey = DictGetKey(body, keySize, valueSize, curIndex);
-    void *nextKey = DictGetKey(body, keySize, valueSize, nextIndex % length);
-    size_t nextHash = hashFunction(keySize, nextKey) % length;
+    void *curKey = DictGetKey(dictionary, keySize, valueSize, curIndex);
+    void *nextKey = DictGetKey(dictionary, keySize, valueSize, nextIndex % dictionary->Length);
+    size_t nextHash = hashFunction(keySize, nextKey) % dictionary->Length;
 
-    if(!DictGetElementExists(existsList, index))
-        return 0;
-
-    for(size_t x = 0; x < length; x++)
+    for(size_t x = 0; x < dictionary->Length; x++)
     {
-        if(!DictGetElementExists(existsList, nextIndex % length))
+        if(!DictGetElementExists(dictionary, keySize, valueSize, nextIndex % dictionary->Length))
             break;
 
         if(nextHash <= curIndex)
         {
-            memcpy(curKey, DictGetKey(body, keySize, valueSize, nextIndex % length), keySize + valueSize);
+            memcpy(curKey, DictGetKey(dictionary, keySize, valueSize, nextIndex % dictionary->Length), keySize + valueSize);
 
             curIndex = nextIndex;
             curKey = nextKey;
         }
 
         nextIndex++;
-        nextKey = DictGetKey(body, keySize, valueSize, nextIndex % length); 
-        nextHash = hashFunction(keySize, nextKey) % length;
+        nextKey = DictGetKey(dictionary, keySize, valueSize, nextIndex % dictionary->Length); 
+        nextHash = hashFunction(keySize, nextKey) % dictionary->Length;
     }
 
-    DictSetElementExists(existsList, curIndex % length, 0);
-    return 1;
+    DictSetElementExists(dictionary, keySize, valueSize, curIndex % dictionary->Length, 0);
+    dictionary->Count -= 1;
 }
 
-int DictIterate(ExistsListNum *existsList, const size_t length, const size_t startIndex, size_t *nextElementIndexDest)
+int DictIterate(const Dictionary *dictionary, const size_t keySize, const size_t valueSize, size_t *index)
 {
-    for(size_t index = startIndex; index < length; index++)
+    for(; *index < dictionary->Length; *index += 1)
     {
-        if(!DictGetElementExists(existsList, index))
+        if(!DictGetElementExists(dictionary, keySize, valueSize, *index))
             continue;
 
-        *nextElementIndexDest = index;
-        return 1;
-    }
-
-    return 0;
-}
-
-int DictResize(ExistsListNum **existsList, void **body, size_t *length, const size_t keySize, const size_t valueSize, HashFunction hashFunction, const size_t newLength)
-{
-    size_t newBodySize = DictGetBodySize(newLength, keySize, valueSize);
-    size_t newExistsListSize = DictGetExistsListSize(newLength);
-    void *newBody = malloc(newBodySize + newExistsListSize);
-
-    if(newBody == NULL)
         return 0;
-
-    ExistsListNum *newExistsList = (ExistsListNum *)(((char *)newBody) + newBodySize);
-    DictSetup(newExistsList, *length);
-
-    for(size_t index = 0; DictIterate(*existsList, *length, index, &index); index++)
-    {
-        void *key = DictGetKey(*body, keySize, valueSize, index);
-        void *value = DictGetValue(*body, keySize, valueSize, index);
-
-        DictAdd(newExistsList, newBody, newLength, keySize, valueSize, hashFunction, key, value);
     }
-
-    free(*body);
-    *existsList = newExistsList;
-    *body = newBody;
-    *length = newLength;
 
     return 1;
 }
@@ -197,15 +191,10 @@ size_t DictDefaultHash(const size_t keySize, const void *key)
 
 int DictDefaultEquate(const size_t keySize, const void *keyA, const void *keyB)
 {
-    int equal = 1;
+    int equal = 0;
 
     for(size_t x = 0; x < keySize; x++)
-        equal &= ((char *)keyA)[x] == ((char *)keyB)[x];
+        equal |= ((char *)keyA)[x] != ((char *)keyB)[x];
     
     return equal;
-}
-
-void DictFree(void *body)
-{
-    free(body);
 }
