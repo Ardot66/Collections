@@ -6,7 +6,6 @@
 
 void TestCArray()
 {
-    printf("\nTesting CArray\n-----\n");
     //Internal array type is size_t
     CArray cArray;
 
@@ -48,8 +47,6 @@ void TestCArray()
 
 void TestArray()
 {
-    printf("\nTesting Array\n-----\n");
-
     size_t length = 1;
     size_t count = 1;
     size_t *array = malloc(sizeof(size_t));
@@ -86,8 +83,6 @@ void TestDictionaryValue(const Dictionary *dictionary, const size_t key, const s
 
 void TestDictionary()
 {
-    printf("\nTesting Dictionary\n-----\n");
-
     typedef struct KeyValuePair
     {
         size_t Key;
