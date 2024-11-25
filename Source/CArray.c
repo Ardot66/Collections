@@ -51,8 +51,11 @@ int CArrayResize(CArray *cArray, const size_t elementSize, const size_t newLengt
 
 int CArrayInsert(CArray *cArray, const size_t elementSize, const size_t index, const void *element)
 {
+    if(index > cArray->Count)
+        cArray->Count = index + 1;
+
     ARRAY_GENERIC_TRY_RESIZE(cArray->Count, cArray->Length, 
-        CArrayResize(cArray, elementSize, cArray->Length * 2 + (cArray->Length == 0)), 
+        CArrayResize(cArray, elementSize, cArray->Count * 2 + (cArray->Length == 0)), 
         return result;
     )
 
