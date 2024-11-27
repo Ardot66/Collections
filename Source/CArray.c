@@ -42,7 +42,7 @@ int CArrayResize(CArray *cArray, const size_t elementSize, const size_t newLengt
     
     cArray->Body = tempBody;
 
-    if(cArray->Length < newLength)
+    if(cArray->Length > 0 && cArray->Length < newLength)
         CArrayResizeElements(cArray, elementSize, newLength);
 
     cArray->Length = newLength;
