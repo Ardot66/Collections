@@ -18,7 +18,7 @@ int ArrayResize(void **array, size_t *length, const size_t elementSize, const si
 int ArrayInsert(void **array, size_t *count, size_t *length, const size_t elementSize, const size_t index, const void *element)
 {
     if(index > *count)
-        *count = index + 1;
+        *count = index;
 
     ARRAY_GENERIC_TRY_RESIZE(*count, *length,
         ArrayResize(array, length, elementSize, *count * 2 + (*length == 0)), 
